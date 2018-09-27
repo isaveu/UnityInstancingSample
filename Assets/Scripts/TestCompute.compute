@@ -1,0 +1,24 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#define THREAD_BLOCK_SIZE 256
+
+RWStructuredBuffer<float3> PositionBuffer;
+RWStructuredBuffer<float> AnimationBuffer;
+RWStructuredBuffer<int> VisibleBuffer;
+
+float _Time;
+
+[numthreads(THREAD_BLOCK_SIZE, 1, 1)]
+void CSMain (uint id : SV_DispatchThreadID)
+{
+    float animVal = AnimationBuffer[id];
+    float i = (float) id;
+    animVal = sin((_Time * 0.1) * i * 0.01) * 1.2;
+    AnimationBuffer[id] = animVal;
+
+    float3 pos = PositionBuffer[id];
+    PositionBuffer[id] = pos;
+
+    int visible = VisibleBuffer[id];
+    VisibleBuffer[id] = visible;
+}
