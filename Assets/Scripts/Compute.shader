@@ -22,6 +22,7 @@
 			StructuredBuffer<float3> PositionBuffer;
 			StructuredBuffer<float> AnimationBuffer;
 			StructuredBuffer<int> VisibleBuffer;
+			StructuredBuffer<float4x4> RotationMatrixBuffer;
 		#endif
 
 		void setup() {
@@ -50,8 +51,9 @@
 				0, 0, 0, 1
 			);
 
+			float4x4 rotMat = RotationMatrixBuffer[unity_InstanceID];
+			v.vertex.xyz = mul(mul(v.vertex.xyz, rotMat), scaleMat);
 			v.vertex.y += animationVal;
-			v.vertex.xyz = mul(v.vertex.xyz, scaleMat);
 #endif
 		}
 

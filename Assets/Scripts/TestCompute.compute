@@ -1,12 +1,40 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 #define THREAD_BLOCK_SIZE 256
+#define PI 3.14159265359
+#define degToRad (PI * 2.0) / 360.0
 
 RWStructuredBuffer<float3> PositionBuffer;
 RWStructuredBuffer<float> AnimationBuffer;
 RWStructuredBuffer<int> VisibleBuffer;
+RWStructuredBuffer<float4x4> RotationMatrixBuffer;
 
 float _Time;
+
+
+float4x4 matRotateX(float rad)
+{
+    return float4x4(1, 0, 0, 0,
+					0, cos(rad), -sin(rad), 0,
+					0, sin(rad), cos(rad), 0,
+					0, 0, 0, 1);
+}
+
+float4x4 matRotateY(float rad)
+{
+    return float4x4(cos(rad), 0, -sin(rad), 0,
+					0, 1, 0, 0,
+					sin(rad), 0, cos(rad), 0,
+					0, 0, 0, 1);
+}
+
+float4x4 matRotateZ(float rad)
+{
+    return float4x4(cos(rad), -sin(rad), 0, 0,
+					sin(rad), cos(rad), 0, 0,
+					0, 0, 1, 0,
+					0, 0, 0, 1);
+}
 
 [numthreads(THREAD_BLOCK_SIZE, 1, 1)]
 void CSMain (uint id : SV_DispatchThreadID)
@@ -21,4 +49,17 @@ void CSMain (uint id : SV_DispatchThreadID)
 
     int visible = VisibleBuffer[id];
     VisibleBuffer[id] = visible;
+
+
+    float rad = _Time*0.001 * (id * 30.0) * degToRad;
+    float rad2 = _Time * 0.001 * (id * 30.0) * degToRad;
+    float rad3 = _Time * 0.001 * (id * 50.0) * degToRad;
+    float4x4 rotX = matRotateX(rad);
+    float4x4 rotY = matRotateY(rad2);
+    float4x4 rotZ = matRotateY(rad3);
+
+    float4x4 rmat = RotationMatrixBuffer[id];
+    rmat = mul(rotX, rotY);
+    rmat = mul(rmat, rotZ);
+    RotationMatrixBuffer[id] = rmat;
 }

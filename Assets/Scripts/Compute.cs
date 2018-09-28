@@ -14,6 +14,7 @@ public class Compute : MonoBehaviour {
     private ComputeBuffer positionBuffer;
     private ComputeBuffer visibleBuffer;
     private ComputeBuffer animationBuffer;
+    private ComputeBuffer rotationMatrixBuffer;
     private ComputeBuffer argsBuffer;
     private uint[] args = new uint[5];
     private uint numeberOfCubes = 10000;
@@ -28,10 +29,12 @@ public class Compute : MonoBehaviour {
         positionBuffer = new ComputeBuffer((int)numeberOfCubes, 12);
         visibleBuffer = new ComputeBuffer((int)numeberOfCubes, sizeof(int));
         animationBuffer = new ComputeBuffer((int)numeberOfCubes, sizeof(float));
+        rotationMatrixBuffer = new ComputeBuffer((int)numeberOfCubes, Marshal.SizeOf(typeof(Matrix4x4)));
         positions = new Vector3[numeberOfCubes];
 
         visible = new int[numeberOfCubes];
         float[] animationValue = new float[numeberOfCubes];
+        Matrix4x4[] mat = new Matrix4x4[numeberOfCubes];
         for (int i = 0; i < numeberOfCubes; i++)
         {
             float dist = 50f;
@@ -44,14 +47,18 @@ public class Compute : MonoBehaviour {
             positions[i] = pos;
             animationValue[i] = 0f;
             visible[i] = 1;
+            mat[i] = Matrix4x4.identity;
         }
 
         positionBuffer.SetData(positions);
         visibleBuffer.SetData(visible);
         animationBuffer.SetData(animationValue);
+        rotationMatrixBuffer.SetData(mat);
+
         material.SetBuffer("PositionBuffer", positionBuffer);
         material.SetBuffer("VisibleBuffer", visibleBuffer);
         material.SetBuffer("AnimationBuffer", animationBuffer);
+        material.SetBuffer("RotationMatrixBuffer", rotationMatrixBuffer);
 
         bounds = new Bounds(Vector3.zero, new Vector3(numeberOfCubes / 3, numeberOfCubes / 3, numeberOfCubes / 3));
 
@@ -85,6 +92,7 @@ public class Compute : MonoBehaviour {
         computeShader.SetBuffer(kernelId, "PositionBuffer", positionBuffer);
         computeShader.SetBuffer(kernelId, "VisibleBuffer", visibleBuffer);
         computeShader.SetBuffer(kernelId, "AnimationBuffer", animationBuffer);
+        computeShader.SetBuffer(kernelId, "RotationMatrixBuffer", rotationMatrixBuffer);
         int groupSize = Mathf.CeilToInt(numeberOfCubes / BLOCK_SIZE);
         computeShader.Dispatch(kernelId, groupSize, 1, 1);
         computeShader.SetFloat("_Time", Time.time);
@@ -93,6 +101,7 @@ public class Compute : MonoBehaviour {
 
     void OnDestroy()
     {
+        rotationMatrixBuffer.Release();
         visibleBuffer.Release();
         animationBuffer.Release();
         positionBuffer.Release();
